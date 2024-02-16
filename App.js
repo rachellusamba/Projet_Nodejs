@@ -91,15 +91,8 @@ app.listen(3000, () => {
 });
 
 
+
 async function main() {
-    const users = await prisma.user.findMany();
-    console.log(users);
+    const allUsers = await prisma.user.findMany()
+    console.log(allUsers)
   }
-  
-  main()
-    .catch(e => {
-      throw e;
-    })
-    .finally(async () => {
-      await prisma.$disconnect();
-    });
