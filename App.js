@@ -1,10 +1,12 @@
 const express = require("express");
 const app = express();
-
+const { Client } = require('pg');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const jwt = require('jsonwebtoken');
+const verifyToken = require('/verifyToken');
 
-
+//tableau API
 const users = [
     {
         id: "1",
@@ -48,26 +50,21 @@ const users = [
         image: "https://cdn.pixabay.com/photo/2015/04/05/08/21/pair-707502_1280.jpg"
     }
 ]
-
 app.get('/api/users', (req, res) => {
     res.send(users);
 });
-
 app.get("/:id", (req, res) => {
     const id = req.params.id
     res.send(users.filter((e) => {
         return e.id == id
     }))
 })
-
 // // Ajout dans le tableau
 app.use(express.json())
-
 app.post("/post", (req, res) => {
     users.push(req.body);
     res.send("succes ajout");
 });
-
 // mettre a jour
 app.put('/put', (req, res) => {
     const userId = req.params.id;
@@ -75,9 +72,7 @@ app.put('/put', (req, res) => {
         return users.splice(userId - 1, 1, req.body)
     }));
 });
-
 // Supprimer
-
 app.delete('/:id', (req, res) => {
     const userId = req.params.id;
     users.filter(((e) => {
@@ -85,14 +80,15 @@ app.delete('/:id', (req, res) => {
     }))
     res.send("suppression du post effectuée avec succès ")
 })
-
 app.listen(3000, () => {
     console.log('Server started on port 3000');
 });
 
+const main = async () => {
+    const users = await prisma.user.findMany();
+    console.log(users);
+}
 
-
-async function main() {
-    const allUsers = await prisma.user.findMany()
-    console.log(allUsers)
-  }
+app.get('/protected-route', verifyToken, (req, res) => {
+    res.json({message:'Route protégée'});
+});
