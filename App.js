@@ -1,10 +1,9 @@
 const express = require("express");
 const app = express();
 const { Client } = require('pg');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
 const jwt = require('jsonwebtoken');
-const verifyToken = require('/verifyToken');
+const verifyToken = require('./VerifyToken');
+const script = require('./script');
 
 //tableau API
 const users = [
@@ -50,6 +49,44 @@ const users = [
         image: "https://cdn.pixabay.com/photo/2015/04/05/08/21/pair-707502_1280.jpg"
     }
 ]
+
+const private_key =`-----BEGIN RSA PRIVATE KEY-----
+MIIEogIBAAKCAQB1isxgdW0MLvCuTEtj70KJrnrEChLaylDakuhYJLaEciIuIkLy
+1Jv1LAtQeKhrGMGqzKu4nNtd0PtC8rhpBRzWR3eg4Hg9gEE7D4qogBw90TuNGasL
+J0sqCxHrxqlzi1vjap1BR3EMwnBNqPV0VtdjgoMv/1J+nYkz5Tdb30V6yps22f+1
+bU43oNUyJAVIJRa3Vfkjzw0pUQ9zeikfOMKJb6DeenRRpsEj0chuZlZm+nZDPX7a
+6bYVGWSeZkaFgPEymLs5hdAHiJWM0RwWmLrFbCXcnjJvr903tKZZSzSkdIOln3Po
+5J16EkFJmQ+UCdMxJlMOjsn6RrarTa89RiihAgMBAAECggEAHsvt/nvlxWJrFw/Q
+VO+0PESlz8Vf6UlG4+3HyIhd9de9kt7RMbR45ETU9hGW9vB2lZyohWc7ppoBqynT
+HVkElDQHaPRHLL302VeaGcnvHFc8xhxqjzKNZAege2kCrs5dlfkyGI9yVEiBiidx
+oDi8mEryulmoMJpv/1PYLE8UcjZSvS4rsowbwkDyhc4GgNBHVffhnUhtS7zERUT5
+XG9jWV2c74yDrO1aKt0EKCk0BBckt/B3EEhTOtDlf6Mpc320fkPYWcEo0A/VWnKB
+hCbALiY7caog19sl5Apm15gMtEmA/CJ0M+F6IWGD6obPvxcFIMRa1mWaKu2kTXAI
+MQw/EQKBgQDneY1IPZcYcjutMj9QEwzHyQDqQaVqQ9BhecLGI4PwwhS/WyKOF/Pb
+0FiouxRV8wXeF4mAeDNA75UgvPklEDYCxICCQz0W8QanIz8mliv0TRNCNyazJrs7
+Xi/ZXJu7KDNBdKmRfM7tE9JXEleNSZKAAr2tejb0l6tT4fiLCzroDQKBgQCB/vl7
+eqR8BCahv79P1F6Z8tx/FcbILlx+5IrI7ISXrr21DWwoOGa9bT9w76p/hEsNwXHn
+Fjl4EQt/rArwjCF4VmJt++HX6ogcvrOrIGDImoMeAExE09yO5dBvY6mcZZryObw6
+FNAjmi64duBE8UFG7eu3agZz28JarMMhKvSp5QKBgQCtU/WZLJVhttg83q1OFpWx
+XDAVOcbVhaYZ94UDvUBlHc9PYrzDTehKpv5ciom1ul6gaVuLGXa3ny857odZW4Q2
+GlJoOFUcQqtKqDf3eue67aQIJygRamU1FVgbGR97y6Rl1SfMS3rfR8JvdMqef4L1
+3BeQOT3BdXjTPRhRdb1MWQKBgFQ1K7z+DBC9y5yZjj8TDZjiBk1YeOTxiz8zomdX
+Nuje68qdgENpjbwFScRJrANgWhH2DmeoMOADApTYiFmcHI5MPwSJ1pk8NqGQMuiW
+V7t6w5aqkL1BFC2I1wVg5N0HwGBKYBCrrMxzMvKRJuPh9+wPcNLmHnnskDCWmuwg
+XE61AoGAOKF2iEsLO2yO4CFujB4H96zuG3y9gVEcX9o7mGhJq7CQ57Y63/Whr1zu
+FMj6HILrVu8/DBGln7fMkPzmngoAc20PmzwpO0/Ca6uq4tuc4nS/9ZbWRmNJyN6p
+3BWdkAoR9Nvq2Mj6lVUBsw0f903WUY4Mx9dtfhWw2jzXoMJW6s8=
+-----END RSA PRIVATE KEY-----`;
+
+const public_key = `-----BEGIN PUBLIC KEY-----
+MIIBITANBgkqhkiG9w0BAQEFAAOCAQ4AMIIBCQKCAQB1isxgdW0MLvCuTEtj70KJ
+rnrEChLaylDakuhYJLaEciIuIkLy1Jv1LAtQeKhrGMGqzKu4nNtd0PtC8rhpBRzW
+R3eg4Hg9gEE7D4qogBw90TuNGasLJ0sqCxHrxqlzi1vjap1BR3EMwnBNqPV0Vtdj
+goMv/1J+nYkz5Tdb30V6yps22f+1bU43oNUyJAVIJRa3Vfkjzw0pUQ9zeikfOMKJ
+b6DeenRRpsEj0chuZlZm+nZDPX7a6bYVGWSeZkaFgPEymLs5hdAHiJWM0RwWmLrF
+bCXcnjJvr903tKZZSzSkdIOln3Po5J16EkFJmQ+UCdMxJlMOjsn6RrarTa89Riih
+AgMBAAE=
+-----END PUBLIC KEY-----`;
 app.get('/api/users', (req, res) => {
     res.send(users);
 });
@@ -84,11 +121,13 @@ app.listen(3000, () => {
     console.log('Server started on port 3000');
 });
 
-const main = async () => {
-    const users = await prisma.user.findMany();
-    console.log(users);
-}
-
 app.get('/protected-route', verifyToken, (req, res) => {
     res.json({message:'Route protégée'});
 });
+
+//inserer le token dans la bd
+// INSER INTO utilisateurs(token_authentification) VALUES ('votre_token') WHERE id_utilisateur = 'id_utilisateur';
+
+//recuperation du token
+// SELECT token_authentification FROM utilisateurs WHERE id_utilisateur = 'id_utilisateur';
+
