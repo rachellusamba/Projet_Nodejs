@@ -1,29 +1,26 @@
 const { PrismaClient } = require('@prisma/client');
-
 const prisma = new PrismaClient();
-
 
 async function main() {
     await prisma.user.create({
         data: {
-            name: 'rachel',
-            email: 'rachellusamba26@gmail.com',
+            name:'rachel',
+            email:"rache@gm.co",
             posts: {
-                create: { title: 'Love us' },
+                create: {title:'Love us'},
             },
             profile: {
-                create: { bio: 'I like us' },
+                create: {bio:'I like us'}
             },
-        },
+        }
     })
-
     const users = await prisma.user.findMany({
         include: {
             posts: true,
-            profile: true,
+            profile: true
         }
     });
-    console.dir(users, { depth: null })
+ console.dir(users, {depth: null})
 }
 
 main()
@@ -36,7 +33,3 @@ main()
         process.exit()
     })
 
-// const main = async () => {
-//     
-//     console.log(users);
-// }
